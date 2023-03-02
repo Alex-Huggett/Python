@@ -1,0 +1,141 @@
+import pygame as pg
+from math import floor
+
+loadFrom = input('Please enter the name of the image you would like to load, including the filetype. \
+                 \nIf you would like to start from scratch, input nothing.\n')
+
+if '.' in loadFrom:
+    image = pg.image.load(loadFrom)
+else:
+    image = None
+
+previous = (0, 0)
+if image == None:
+    wx, wy = (720, 480)
+else:
+    wx, wy = image.get_size()
+px = 140
+gw = pg.display.set_mode((wx+px, wy))
+pg.display.set_caption('Drawing Software')
+
+class Drawer:
+    @staticmethod
+    def Dot(x, y, size):
+        # TODO BUG we need to replace chunks of it at a time, as this is very inefficient.
+        global image
+        radius = int(floor(size/2))
+        onesToChange = [[(x+xi,y+yi) for xi in range(-radius, radius)] for yi in range(-radius, radius)]
+        onesToChange = sum(onesToChange, [])
+
+        for one in onesToChange:
+            if not (one[0]<0 or one[1]<0 or one[0]>=wx or one[1]>=wy):
+                for colour in range(3):
+                    position = one[0]*3+(one[1]*wx*3)+colour
+                    image[position] = int(round(Sliders[colour]))
+
+    @staticmethod
+    def Draw():
+        global image
+        global previous
+
+        x, y = pg.mouse.get_pos()
+        x -= px
+        if pg.mouse.get_pressed()[0]:
+            prevx, prevy = previous
+            
+            image = pg.image.tostring(image, 'RGB')
+            image = list(image)
+
+            # with the distance
+            distance = int(round((((x-prevx)**2)+((y-prevy)**2))**0.5))
+            if not distance == 0:
+                dbd = 1/distance
+                for i in range(distance):
+                    Drawer.Dot(int(round(prevx*dbd*i+(x*dbd*(distance-i)))), int(round(prevy*dbd*i+(y*dbd*(distance-i)))), Sliders[3])
+
+            image = bytes(image)
+            image = pg.image.fromstring(image, (wx, wy), 'RGB')
+
+        previous = (x, y)
+
+    @staticmethod
+    def Refresh():
+        global hasQuit
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                hasQuit = True
+
+        if not hasQuit:
+            pg.display.update()
+            gw.fill((0,0,0))
+    
+    @staticmethod
+    def Sliders():
+        # R, G, B, Size
+
+        MouseDown = pg.mouse.get_pressed()[0]
+        mousex, mousey = pg.mouse.get_pos()
+        global Sliders
+        global padding
+        for slider in range(len(Sliders)):
+            colour = [255*(slider==i) for i in range(3)]
+            # the slider value goes up to 255
+            sliderValue = Sliders[slider]/255      # v/1
+            x = padding+((sliderValue)*(px-padding*2))
+            y = (slider+0.5)*(wy/(len(Sliders)+1))
+            pg.draw.circle(gw, colour, (x, y), 18)
+
+            if SelectedSliders[slider]:
+                if MouseDown:
+                    x = ((mousex-padding)/(px-padding*2))*255
+                    if x<0:
+                        x = 0
+                    if x>255:
+                        x = 255
+
+                    Sliders[slider] = x
+                else:
+                    SelectedSliders[slider] = False
+            else:
+                if MouseDown:
+                    if abs(mousex-x)<padding and abs(mousey-y)<padding:
+                        SelectedSliders[slider] = True
+        
+        r,g,b, *_ = Sliders
+        pg.draw.rect(gw, (r,g,b), pg.Rect(padding, (len(Sliders)+0.5)*(wy/(len(Sliders)+1)), px-(padding*2), padding*2))
+
+if image == None:
+    image = bytes([255 for _ in range(wx*wy*3)])
+    image = pg.image.fromstring(image, (wx, wy), 'RGB')
+
+padding = 20
+SelectedSliders = [False]*4
+Sliders = [0]*4
+
+hasQuit = False
+
+while not hasQuit:
+    # if pygame has not been quit
+    Drawer.Draw()
+    gw.blit(image, (px, 0))
+
+    pg.draw.rect(gw, (200,200,200), pg.Rect(0,0, px,wy), 0, 5)
+
+    x, y = pg.mouse.get_pos()
+    if x<px:
+        x,y = ((wx+px)/2,wy/2)
+
+    pg.draw.circle(gw, Sliders, (x,y), Sliders[3]+2, 4)
+    Drawer.Sliders()
+    Drawer.Refresh()
+
+    if pg.key.get_pressed()[pg.K_s]:
+        pg.quit()
+        hasQuit = True
+
+saveAs = input('What would you like to save it as? Input nothing to not save.\n')
+
+if not saveAs == '':
+    pg.image.save(image, saveAs+'.png')
