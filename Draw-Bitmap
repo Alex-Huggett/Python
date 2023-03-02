@@ -24,7 +24,7 @@ class Drawer:
         SlidersAsInt = [int(round(slider)) for slider in Sliders]
 
         global image
-        radius = int(floor(size/2))
+        radius = int(floor(size*0.5))
 
         for yi in range(-radius, radius):
             # set the y position
@@ -50,8 +50,6 @@ class Drawer:
 
                 # set the area within the stamp to the colour selected
                 image[left : right] = SlidersAsInt[:3] * int( ( right - left ) / 3 )
-
-            # BUG TODO Do not do the repeat loop too much.
 
     @staticmethod
     def Draw():
@@ -145,7 +143,7 @@ while not hasQuit:
 
     x, y = pg.mouse.get_pos()
     if x<px:
-        x,y = ((wx+px)/2,wy/2)
+        x,y = ((wx+px)*0.5,wy*0.5)
 
     pg.draw.circle(gw, Sliders, (x,y), Sliders[3]+2, 4)
     Drawer.Sliders()
