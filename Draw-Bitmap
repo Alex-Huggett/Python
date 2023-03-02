@@ -21,17 +21,37 @@ pg.display.set_caption('Drawing Software')
 class Drawer:
     @staticmethod
     def Dot(x, y, size):
-        # TODO BUG we need to replace chunks of it at a time, as this is very inefficient.
+        SlidersAsInt = [int(round(slider)) for slider in Sliders]
+
         global image
         radius = int(floor(size/2))
-        onesToChange = [[(x+xi,y+yi) for xi in range(-radius, radius)] for yi in range(-radius, radius)]
-        onesToChange = sum(onesToChange, [])
 
-        for one in onesToChange:
-            if not (one[0]<0 or one[1]<0 or one[0]>=wx or one[1]>=wy):
-                for colour in range(3):
-                    position = one[0]*3+(one[1]*wx*3)+colour
-                    image[position] = int(round(Sliders[colour]))
+        for yi in range(-radius, radius):
+            # set the y position
+            ypos = y+yi
+
+            # do not overflow from the left
+            if ypos < 0:
+                ypos = 0
+
+            # do not overflow from the bottom
+            if not ypos >= wy:
+                # set the left and right of the box being stamped
+                left:int =  ( ypos * wx * 3 ) + ( ( x - radius ) * 3 )
+                right:int = ( ypos * wx * 3 ) + ( ( x + radius ) * 3 )
+
+                # if it overflows off of the left, do not let it.
+                if ( x - radius ) < 0 :
+                    left = right
+                
+                # same with right
+                if ( x + radius ) > wx :
+                    right = ( ( ypos + 1 ) * wx * 3 )
+
+                # set the area within the stamp to the colour selected
+                image[left : right] = SlidersAsInt[:3] * int( ( right - left ) / 3 )
+
+            # BUG TODO Do not do the repeat loop too much.
 
     @staticmethod
     def Draw():
