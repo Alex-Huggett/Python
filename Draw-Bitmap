@@ -1,20 +1,29 @@
 import pygame as pg
 from math import floor
 
+# allow the user to open a file to draw over
 loadFrom = input('Please enter the name of the image you would like to load, including the filetype. \
                  \nIf you would like to start from scratch, input nothing.\n')
 
+# if they input something that cannot be loaded, do not try to load it
 if '.' in loadFrom:
     image = pg.image.load(loadFrom)
 else:
     image = None
 
+# the mouse position must start at something
 previous = (0, 0)
+
+# if the image has not been loaded, set it to the default size
 if image == None:
     wx, wy = (720, 480)
 else:
     wx, wy = image.get_size()
+
+# the size of the pallet (pallet x)
 px = 140
+
+# set the caption and the game window
 gw = pg.display.set_mode((wx+px, wy))
 pg.display.set_caption('Drawing Software')
 
